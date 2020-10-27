@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+//Should be in this order
 const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
@@ -15,7 +16,7 @@ app.use(express.static("public"));
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 
-// Place this code on top of the connection
+// Place this code on top of the connection. Fron Passportjs.org
 app.use(session({
   secret: "Our little secret.",
   resave: false,
@@ -32,12 +33,13 @@ const userSchema = new mongoose.Schema ({
   email: String,
   password: String
 });
-// Add passport plugin
+// Add passport plugin to hash and salt from NPM samples
 userSchema.plugin(passportLocalMongoose);
 
 // User Model
 const User = new mongoose.model("User", userSchema);
 
+// For creating cookies reading Cookies
 passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
@@ -62,7 +64,7 @@ app.get("/secrets", function(req, res){
     res.redirect("/login");
   }
 });
-//After login out
+//Route for page After login out. Passportjs function.
 app.get("/logout", function(req, res){
   req.logout();
   res.redirect("/");
@@ -71,7 +73,7 @@ app.get("/logout", function(req, res){
 // Register Route with NPM bcrypt
 app.post("/register", function(req, res){
 
-  User.register({username: req.body.username}, req.body.passord, function(err, user){
+  User.register({username: req.body.username}, req.body.password, function(err, user){
     if (err) {
       console.log(err);
       res.redirect("/register");
@@ -82,7 +84,8 @@ app.post("/register", function(req, res){
     }
   });
 });
-// From Login form if allready registered
+// To get Login form info if allready registered
+// to be parsed by the login function from Passport.
 app.post("/login", function(req, res){
 
   const user = new User({
