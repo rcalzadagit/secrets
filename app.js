@@ -33,7 +33,8 @@ mongoose.set("useCreateIndex", true);
 // User Schema using Mongoose-Encryption
 const userSchema = new mongoose.Schema ({
   email: String,
-  password: String
+  password: String,
+  googleId: String
 });
 // Add passport plugin to hash and salt from NPM samples
 userSchema.plugin(passportLocalMongoose);
@@ -44,8 +45,16 @@ const User = new mongoose.model("User", userSchema);
 
 // For creating cookies reading Cookies
 passport.use(User.createStrategy());
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+
+passport.serializeUser(function(user, done) {
+  done(null, user.id);
+});
+
+passport.deserializeUser(function(id, done) {
+  User.findById(id, function(err, user) {
+    done(err, user);
+  });
+});
 
 // Google OAuth Strategy
 passport.use(new GoogleStrategy({
@@ -65,6 +74,17 @@ passport.use(new GoogleStrategy({
 app.get("/", function(req, res){
   res.render("home");
 });
+
+//To get profile from Google
+app.get("/auth/google",
+  passport.authenticate('google', {scope: ["profile"]})
+);
+//From my Google API Credentials
+app.get("/auth/google/MyOAuth",
+  passport.authenticate('google', { failureRedirect: "/login" }),
+  function(req, res) {
+    res.redirect("/secrets");
+  });
 
 app.get("/login", function(req, res){
   res.render("login");
